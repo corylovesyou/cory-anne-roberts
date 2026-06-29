@@ -83,6 +83,7 @@ window.GALLERY = [
   // strong opens — Vans spread, Duckwrth shoots separated
   { file: "photo/SemblanceCover.jpeg",                                          client: "Semblance · Movie Poster",  tag: "Photography", orient: "p" },
   { file: "Category Faves/PHOTO/VansRexRaiven97.jpg",                          client: "Vans x T-Rex Global",       tag: "Photography", orient: "p" },
+  { file: "NEW FAVES FOR DECK/PHOTO/VansRexRaiven196.jpg",                     client: "Vans x T-Rex Global",       tag: "Photography", orient: "p" },
   { file: "Category Faves/PHOTO/STELLA ROSA BRANDY0000.jpg",                   client: "Stella Rosa · Brandy",      tag: "Photography", orient: "p" },
   { file: "Category Faves/PHOTO/DiegoBoxing40.jpg",                            client: "Diego A",                   tag: "Photography", orient: "p" },
   { file: "Category Faves/PHOTO/VansForCoverPage.webp",                        client: "Vans x T-Rex Global",       tag: "Photography", orient: "p" },
@@ -92,14 +93,13 @@ window.GALLERY = [
   { file: "Category Faves/PHOTO/MISFITZMAG.jpg",                               client: "MISFITZMAG · Julia Rose",   tag: "Photography", orient: "p" },
   { file: "photo/JosephChilliamsEP.jpg",                                        client: "Joseph Chilliams · EP",     tag: "Photography", orient: "p" },
   { file: "Category Faves/PHOTO/VansRexRaiven29.jpg",                          client: "Vans x T-Rex Global",       tag: "Photography", orient: "p" },
-  { file: "NEW FAVES FOR DECK/PHOTO/VansRexRaiven196.jpg",                     client: "Vans x T-Rex Global",       tag: "Photography", orient: "p" },
   { file: "Category Faves/PHOTO/STELLA ROSA BRANDY0001.jpg",                   client: "Stella Rosa · Brandy",      tag: "Photography", orient: "p" },
-  { file: "NEW FAVES FOR DECK/PHOTO/VansRexRaiven224.jpg",                     client: "Vans x T-Rex Global",       tag: "Photography", orient: "p" },
   { file: "Category Faves/PHOTO/SabZadaMISFITZMAG7 (1).jpg",                  client: "MISFITZMAG · Sab Zada",     tag: "Photography", orient: "p" },
   { file: "Category Faves/PHOTO/Duckworthmusicvideo.webp",                     client: "Duckwrth · Music Video",    tag: "Photography", orient: "l" },
   { file: "NEW FAVES FOR DECK/PHOTO/LilTayMusicVideo.jpg",                     client: "Lil Tay · Music Video",     tag: "Photography", orient: "p" },
   { file: "NEW FAVES FOR DECK/PHOTO/DuckwrthSolo24.jpg",                       client: "Duckwrth · Music Video",    tag: "Photography", orient: "p" },
   { file: "NEW FAVES FOR DECK/PHOTO/VansRexRaiven280.jpg",                     client: "Vans x T-Rex Global",       tag: "Photography", orient: "l" },
+  { file: "NEW FAVES FOR DECK/PHOTO/VansRexRaiven224.jpg",                     client: "Vans x T-Rex Global",       tag: "Photography", orient: "p" },
 
   // editorial & celebrity
   { file: "Category Faves/PHOTO/LottieGarden0000.JPG",                         client: "Lottie Moss",               tag: "Photography", orient: "p" },
