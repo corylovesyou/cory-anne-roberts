@@ -56,6 +56,18 @@
     background: #1a1a1a; border-top: 1px solid #2a2a2a;
   }
   .item .tag { color: #666; font-size: .6rem; display: block; margin-top: 2px; }
+  .item .tag-text {
+    cursor: pointer; padding: 1px 4px; border-radius: 3px;
+    border: 1px solid transparent; transition: border-color .1s;
+    display: inline-block;
+  }
+  .item .tag-text:hover { border-color: #4a9eff; background: #0d1e30; color: #4a9eff; }
+  .item.retagged .tag-text { border-color: #4a9eff; background: #0d1e30; color: #4a9eff; }
+  .item select.tag-edit {
+    background: #0d1e30; border: 1px solid #4a9eff; color: #4a9eff;
+    font-size: .6rem; padding: 1px 3px; border-radius: 3px; outline: none;
+  }
+  .ren-count.retag { color: #4a9eff; }
   .item .caption-text {
     cursor: text; padding: 2px 4px; border-radius: 3px;
     border: 1px solid transparent; transition: border-color .1s;
@@ -89,7 +101,7 @@
 <div class="filter-chips" id="chips"></div>
 
 <div class="controls">
-  <span class="count-bar"><span class="del-count" id="delCount">0 to delete</span> &nbsp;·&nbsp; <span class="ren-count" id="renCount">0 renamed</span></span>
+  <span class="count-bar"><span class="del-count" id="delCount">0 to delete</span> &nbsp;·&nbsp; <span class="ren-count" id="renCount">0 renamed</span> &nbsp;·&nbsp; <span class="ren-count" id="retagCount" style="color:#4a9eff">0 retagged</span></span>
   <button onclick="selectAll()">Mark All Visible for Deletion</button>
   <button onclick="deselectAll()">Clear Deletions</button>
   <button class="danger" onclick="showOutput()">Generate List ▶</button>
@@ -108,8 +120,10 @@ const gallery = window.GALLERY;
 const grid = document.getElementById('grid');
 const chips = document.getElementById('chips');
 const toDelete = new Set();
-const renames = new Map(); // index -> new client name
+const renames = new Map();  // index -> new client name
+const retags = new Map();   // index -> new tag
 let activeTag = 'All';
+const allTags = ['Art Direction', 'Creative Production', 'Photography'];
 
 const tags = ['All', ...Array.from(new Set(gallery.map(g => g.tag)))];
 
@@ -130,6 +144,43 @@ tags.forEach(t => {
 function updateCounts() {
   document.getElementById('delCount').textContent = toDelete.size + ' to delete';
   document.getElementById('renCount').textContent = renames.size + ' renamed';
+  document.getElementById('retagCount').textContent = retags.size + ' retagged';
+}
+
+function startTagEdit(tagEl, idx, currentTag) {
+  if (tagEl.querySelector('select')) return;
+  const span = tagEl.querySelector('.tag-text');
+  const sel = document.createElement('select');
+  sel.className = 'tag-edit';
+  allTags.forEach(t => {
+    const opt = document.createElement('option');
+    opt.value = t; opt.textContent = t;
+    if (t === (retags.has(idx) ? retags.get(idx) : currentTag)) opt.selected = true;
+    sel.appendChild(opt);
+  });
+  span.replaceWith(sel);
+  sel.focus();
+
+  function commit() {
+    const val = sel.value;
+    const newSpan = document.createElement('span');
+    newSpan.className = 'tag-text';
+    newSpan.textContent = val;
+    newSpan.onclick = () => startTagEdit(tagEl, idx, currentTag);
+    sel.replaceWith(newSpan);
+    if (val !== currentTag) {
+      retags.set(idx, val);
+      tagEl.closest('.item').classList.add('retagged');
+    } else {
+      retags.delete(idx);
+      tagEl.closest('.item').classList.remove('retagged');
+    }
+    updateCounts();
+  }
+
+  sel.addEventListener('change', commit);
+  sel.addEventListener('blur', commit);
+  sel.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === 'Escape') commit(); });
 }
 
 function startEdit(labelEl, idx, currentName) {
@@ -173,6 +224,7 @@ function renderGrid() {
     let cls = 'item';
     if (toDelete.has(idx)) cls += ' selected';
     if (renames.has(idx)) cls += ' renamed';
+    if (retags.has(idx)) cls += ' retagged';
     div.className = cls;
 
     const imgWrap = document.createElement('div');
@@ -193,12 +245,17 @@ function renderGrid() {
     span.className = 'caption-text';
     span.textContent = currentName;
     span.onclick = () => startEdit(label, idx, g.client);
+    const currentTagVal = retags.has(idx) ? retags.get(idx) : g.tag;
     const tagSpan = document.createElement('span');
     tagSpan.className = 'tag';
-    tagSpan.textContent = g.tag;
+    const tagText = document.createElement('span');
+    tagText.className = 'tag-text';
+    tagText.textContent = currentTagVal;
+    tagText.onclick = () => startTagEdit(tagSpan, idx, g.tag);
+    tagSpan.appendChild(tagText);
     const hint = document.createElement('span');
     hint.className = 'edit-hint';
-    hint.textContent = '✎ click caption to rename';
+    hint.textContent = '✎ click caption to rename · click category to move';
     label.append(span, tagSpan, hint);
 
     div.append(imgWrap, label);
@@ -232,9 +289,16 @@ function showOutput() {
       lines.push(gallery[i].file + '  →  ' + newName);
     });
   }
-  if (lines.length === 0) { alert('Nothing selected or renamed yet.'); return; }
+  if (retags.size > 0) {
+    lines.push('');
+    lines.push('=== RETAG ===');
+    Array.from(retags.entries()).sort((a,b) => a[0]-b[0]).forEach(([i, newTag]) => {
+      lines.push(gallery[i].file + '  →  ' + newTag);
+    });
+  }
+  if (lines.length === 0) { alert('Nothing selected, renamed, or retagged yet.'); return; }
   const out = document.getElementById('output');
-  document.getElementById('outputTitle').textContent = toDelete.size + ' deletions · ' + renames.size + ' renames — paste to Claude';
+  document.getElementById('outputTitle').textContent = toDelete.size + ' deletions · ' + renames.size + ' renames · ' + retags.size + ' retagged — paste to Claude';
   document.getElementById('outputText').textContent = lines.join('\n');
   out.style.display = 'block';
   out.scrollIntoView({ behavior: 'smooth' });
