@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Gallery Curation Tool</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: -apple-system, sans-serif; background: #111; color: #eee; padding: 24px; }
+  h1 { font-size: 1rem; letter-spacing: .1em; text-transform: uppercase; margin-bottom: 6px; color: #fff; }
+  .meta { font-size: .75rem; color: #888; margin-bottom: 20px; line-height: 1.6; }
+  .meta b { color: #e74c3c; }
+  .meta span { color: #f0a500; }
+  .controls { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; margin-bottom: 20px; }
+  .controls button {
+    padding: 6px 14px; border: 1px solid #444; background: #222; color: #eee;
+    font-size: .75rem; letter-spacing: .08em; text-transform: uppercase; cursor: pointer; border-radius: 4px;
+  }
+  .controls button:hover { background: #333; }
+  .controls button.danger { border-color: #c0392b; color: #e74c3c; }
+  .controls button.danger:hover { background: #2c1010; }
+  .filter-chips { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 20px; }
+  .chip {
+    padding: 4px 12px; border: 1px solid #444; background: #1a1a1a; color: #aaa;
+    font-size: .7rem; letter-spacing: .08em; text-transform: uppercase; cursor: pointer; border-radius: 20px;
+  }
+  .chip.active { border-color: #fff; color: #fff; background: #2a2a2a; }
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+    gap: 10px;
+  }
+  .item {
+    position: relative; border-radius: 4px; overflow: hidden;
+    border: 2px solid transparent; transition: border-color .15s;
+    background: #222;
+  }
+  .item.selected { border-color: #e74c3c; }
+  .item.renamed { border-color: #f0a500; }
+  .item.selected.renamed { border-color: #e74c3c; }
+  .item .img-wrap { position: relative; cursor: pointer; }
+  .item .img-wrap:hover .overlay { opacity: 1; }
+  .item.selected .overlay { opacity: 1; }
+  .item img {
+    width: 100%; aspect-ratio: 1; object-fit: cover; display: block;
+    background: #333;
+  }
+  .item .overlay {
+    position: absolute; inset: 0; background: rgba(200,30,30,.5);
+    display: flex; align-items: center; justify-content: center;
+    opacity: 0; transition: opacity .15s;
+    font-size: 2rem; color: #fff; pointer-events: none;
+  }
+  .item .label {
+    padding: 5px 7px 3px; font-size: .65rem; color: #ccc; line-height: 1.3;
+    background: #1a1a1a; border-top: 1px solid #2a2a2a;
+  }
+  .item .tag { color: #666; font-size: .6rem; display: block; margin-top: 2px; }
+  .item .caption-text {
+    cursor: text; padding: 2px 4px; border-radius: 3px;
+    border: 1px solid transparent; transition: border-color .1s;
+    display: block; word-break: break-word;
+  }
+  .item .caption-text:hover { border-color: #f0a500; background: #1e1a10; }
+  .item input.caption-edit {
+    width: 100%; background: #1e1a10; border: 1px solid #f0a500; color: #fff;
+    font-size: .65rem; padding: 2px 4px; border-radius: 3px; outline: none;
+  }
+  .item .edit-hint { font-size: .55rem; color: #555; margin-top: 3px; display: block; }
+  #output {
+    display: none; margin-top: 24px; background: #1a1a1a; border: 1px solid #333;
+    border-radius: 6px; padding: 16px;
+  }
+  #output h2 { font-size: .8rem; letter-spacing: .1em; text-transform: uppercase; margin-bottom: 12px; }
+  #output pre { font-size: .7rem; color: #aaa; white-space: pre-wrap; word-break: break-all; line-height: 1.8; }
+  .count-bar { font-size: .75rem; }
+  .del-count { color: #e74c3c; font-weight: bold; }
+  .ren-count { color: #f0a500; font-weight: bold; }
+</style>
+</head>
+<body>
+<h1>Gallery Curation Tool</h1>
+<p class="meta">
+  <b>Click an image</b> to mark it for deletion (red border).<br>
+  <span>Click a caption</span> to rename it (gold border) — press Enter or click away to confirm.<br>
+  Hit <b>Generate List</b> when done and paste to Claude.
+</p>
+
+<div class="filter-chips" id="chips"></div>
+
+<div class="controls">
+  <span class="count-bar"><span class="del-count" id="delCount">0 to delete</span> &nbsp;·&nbsp; <span class="ren-count" id="renCount">0 renamed</span></span>
+  <button onclick="selectAll()">Mark All Visible for Deletion</button>
+  <button onclick="deselectAll()">Clear Deletions</button>
+  <button class="danger" onclick="showOutput()">Generate List ▶</button>
+</div>
+
+<div class="grid" id="grid"></div>
+
+<div id="output">
+  <h2 id="outputTitle"></h2>
+  <pre id="outputText"></pre>
+</div>
+
+<script src="js/gallery.js"></script>
+<script>
+const gallery = window.GALLERY;
+const grid = document.getElementById('grid');
+const chips = document.getElementById('chips');
+const toDelete = new Set();
+const renames = new Map(); // index -> new client name
+let activeTag = 'All';
+
+const tags = ['All', ...Array.from(new Set(gallery.map(g => g.tag)))];
+
+tags.forEach(t => {
+  const btn = document.createElement('button');
+  btn.className = 'chip' + (t === 'All' ? ' active' : '');
+  const count = t === 'All' ? gallery.length : gallery.filter(g => g.tag === t).length;
+  btn.textContent = t + ' (' + count + ')';
+  btn.onclick = () => {
+    activeTag = t;
+    document.querySelectorAll('.chip').forEach(c => c.classList.remove('active'));
+    btn.classList.add('active');
+    renderGrid();
+  };
+  chips.appendChild(btn);
+});
+
+function updateCounts() {
+  document.getElementById('delCount').textContent = toDelete.size + ' to delete';
+  document.getElementById('renCount').textContent = renames.size + ' renamed';
+}
+
+function startEdit(labelEl, idx, currentName) {
+  if (labelEl.querySelector('input')) return;
+  const span = labelEl.querySelector('.caption-text');
+  const input = document.createElement('input');
+  input.className = 'caption-edit';
+  input.value = renames.has(idx) ? renames.get(idx) : currentName;
+  span.replaceWith(input);
+  input.focus();
+  input.select();
+
+  function commit() {
+    const val = input.value.trim();
+    const newSpan = document.createElement('span');
+    newSpan.className = 'caption-text';
+    newSpan.textContent = val || currentName;
+    newSpan.onclick = () => startEdit(labelEl, idx, currentName);
+    input.replaceWith(newSpan);
+    if (val && val !== currentName) {
+      renames.set(idx, val);
+      labelEl.closest('.item').classList.add('renamed');
+    } else if (!val || val === currentName) {
+      renames.delete(idx);
+      if (!toDelete.has(idx)) labelEl.closest('.item').classList.remove('renamed');
+    }
+    updateCounts();
+  }
+
+  input.addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); commit(); } if (e.key === 'Escape') { input.value = currentName; commit(); } });
+  input.addEventListener('blur', commit);
+}
+
+function renderGrid() {
+  grid.innerHTML = '';
+  const items = activeTag === 'All' ? gallery : gallery.filter(g => g.tag === activeTag);
+  items.forEach(g => {
+    const idx = gallery.indexOf(g);
+    const currentName = renames.has(idx) ? renames.get(idx) : g.client;
+    const div = document.createElement('div');
+    let cls = 'item';
+    if (toDelete.has(idx)) cls += ' selected';
+    if (renames.has(idx)) cls += ' renamed';
+    div.className = cls;
+
+    const imgWrap = document.createElement('div');
+    imgWrap.className = 'img-wrap';
+    imgWrap.innerHTML = `
+      <img src="${g.file}" loading="lazy" onerror="this.style.background='#3a1a1a'" />
+      <div class="overlay">✕</div>
+    `;
+    imgWrap.onclick = () => {
+      if (toDelete.has(idx)) { toDelete.delete(idx); div.classList.remove('selected'); }
+      else { toDelete.add(idx); div.classList.add('selected'); }
+      updateCounts();
+    };
+
+    const label = document.createElement('div');
+    label.className = 'label';
+    const span = document.createElement('span');
+    span.className = 'caption-text';
+    span.textContent = currentName;
+    span.onclick = () => startEdit(label, idx, g.client);
+    const tagSpan = document.createElement('span');
+    tagSpan.className = 'tag';
+    tagSpan.textContent = g.tag;
+    const hint = document.createElement('span');
+    hint.className = 'edit-hint';
+    hint.textContent = '✎ click caption to rename';
+    label.append(span, tagSpan, hint);
+
+    div.append(imgWrap, label);
+    grid.appendChild(div);
+  });
+}
+
+function selectAll() {
+  const items = activeTag === 'All' ? gallery : gallery.filter(g => g.tag === activeTag);
+  items.forEach(g => toDelete.add(gallery.indexOf(g)));
+  renderGrid();
+  updateCounts();
+}
+
+function deselectAll() {
+  toDelete.clear();
+  renderGrid();
+  updateCounts();
+}
+
+function showOutput() {
+  const lines = [];
+  if (toDelete.size > 0) {
+    lines.push('=== DELETE ===');
+    Array.from(toDelete).sort((a,b) => a-b).forEach(i => lines.push(gallery[i].file));
+  }
+  if (renames.size > 0) {
+    lines.push('');
+    lines.push('=== RENAME ===');
+    Array.from(renames.entries()).sort((a,b) => a[0]-b[0]).forEach(([i, newName]) => {
+      lines.push(gallery[i].file + '  →  ' + newName);
+    });
+  }
+  if (lines.length === 0) { alert('Nothing selected or renamed yet.'); return; }
+  const out = document.getElementById('output');
+  document.getElementById('outputTitle').textContent = toDelete.size + ' deletions · ' + renames.size + ' renames — paste to Claude';
+  document.getElementById('outputText').textContent = lines.join('\n');
+  out.style.display = 'block';
+  out.scrollIntoView({ behavior: 'smooth' });
+}
+
+renderGrid();
+</script>
+</body>
+</html>
