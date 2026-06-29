@@ -105,7 +105,6 @@ window.GALLERY = [
   { file: "Category Faves/PHOTO/Brandy 5.JPG",                                                  client: "Shagmag · Brandy Gordon",          tag: "Photography", orient: "p" },
   { file: "Category Faves/PHOTO/LottiePastelRoom 38.jpg",                                       client: "Lottie Moss",                      tag: "Photography", orient: "p" },
   { file: "Category Faves/PHOTO/BellaSaintclaire.jpg",                                          client: "Bella Saintclaire",                tag: "Photography", orient: "p" },
-  { file: "Category Faves/PHOTO/RuckusartistPresss.jpg",                                        client: "Ruckus · Artist Press",            tag: "Photography", orient: "p" },
   { file: "Category Faves/PHOTO/Mabash08-15-25-12_(2).jpg",                                     client: "MABASH",                           tag: "Photography", orient: "p" },
   { file: "Category Faves/PHOTO/SabZadaMISFITZMAG29.jpg",                                       client: "MISFITZMAG · Sab Zada",            tag: "Photography", orient: "p" },
 
