@@ -84,7 +84,7 @@ window.GALLERY = [
   { file: "photo/SemblanceCover.jpeg",                                          client: "Semblance · Movie Poster",  tag: "Photography", orient: "p" },
   { file: "Category Faves/PHOTO/VansRexRaiven97.jpg",                          client: "Vans x T-Rex Global",       tag: "Photography", orient: "p" },
   { file: "Category Faves/PHOTO/STELLA ROSA BRANDY0000.jpg",                   client: "Stella Rosa · Brandy",      tag: "Photography", orient: "p" },
-  { file: "Category Faves/PHOTO/BRANDY 2.JPG",                                 client: "Stella Rosa · Brandy Gordon", tag: "Photography", orient: "p" },
+  { file: "Category Faves/PHOTO/BRANDY 2.JPG",                                 client: "Shagmag · Brandy Gordon",   tag: "Photography", orient: "p" },
   { file: "NEW FAVES FOR DECK/PHOTO/VansRexRaiven196.jpg",                     client: "Vans x T-Rex Global",       tag: "Photography", orient: "p" },
   { file: "Category Faves/PHOTO/DiegoBoxing40.jpg",                            client: "Diego A",                   tag: "Photography", orient: "p" },
   { file: "photo/JosephChilliamsEP.jpg",                                        client: "Joseph Chilliams · EP",     tag: "Photography", orient: "p" },
